@@ -1,14 +1,13 @@
 require_relative "widget"
+require_relative "product_catalogue"
 require_relative "offer"
 require_relative "delivery_rule"
-require_relative "offers/red_widget_half"
-require_relative "offers/red_widget_bogo_offer"
 
 class Basket
   attr_reader :items, :product_catalogue, :offers, :delivery_rule
 
-  def initialize(product_catalogue = [], offers = [], delivery_rule = nil)
-    @product_catalogue = product_catalogue # TODO: array of widgets?
+  def initialize(product_catalogue = nil, offers = [], delivery_rule = nil)
+    @product_catalogue = product_catalogue || ProductCatalogue.new # Default catalogue with all widgets
     @offers = offers # array of offers to allow multiple offer support
     @delivery_rule = delivery_rule || DeliveryRule.new # fallback to default delivery rule
 
@@ -29,13 +28,14 @@ class Basket
 
   # method that takes product code as a parameter
   def add(widget_code)
+    # Find widget from the product catalogue
     widget = @product_catalogue.find_by_code(widget_code)
-    raise ArgumentError, "Invalid item code: #{widget_code}" if widget.nil?
-    raise ArgumentError, "Invalid item type: #{widget.class}" unless widget.is_a?(Widget)
 
-    items << widget
-
-    self
+    if widget
+      @items << widget
+    else
+      raise ArgumentError, "Widget with code #{widget_code} not found in product catalogue"
+    end
   end
 
   def subtotal
