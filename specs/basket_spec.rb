@@ -9,6 +9,10 @@ RSpec.describe "Acme Widget Co Basket Test" do
   let(:free_delivery) { DeliveryRules::FreeDeliveryRule.new }
   let(:bogo_red_offer) { Offers::RedWidgetBogoOffer.new }
 
+  let(:red_widget_code) { Widgets::RedWidget::RED_WIDGET[:code] }
+  let(:green_widget_code) { Widgets::GreenWidget::GREEN_WIDGET[:code] }
+  let(:blue_widget_code) { Widgets::BlueWidget::BLUE_WIDGET[:code] }
+
   describe "Product Catalogue" do
     it "contains the three required products with correct prices" do
       red_widget = product_catalogue.find_by_code("R01")
@@ -48,28 +52,28 @@ RSpec.describe "Acme Widget Co Basket Test" do
     end
   end
 
-  # to test if the actual discount logic including pairs is working correctly
+  # test if the pairs calculation is working correctly
   describe "Red Widget Only Basket With Buy One Get Other Half Price Offer" do
     let(:basket) { Basket.new(product_catalogue, [bogo_red_offer], free_delivery) }
 
     it "applies no discount for single red widget" do
-      basket.add(Widgets::RedWidget::RED_WIDGET[:code])
+      basket.add(red_widget_code)
       expect(basket.total).to eq(32.95)
     end
 
     it "applies BOGO offer for a pair of red widgets" do
-      basket.add(Widgets::RedWidget::RED_WIDGET[:code])
-      basket.add(Widgets::RedWidget::RED_WIDGET[:code])
+      basket.add(red_widget_code)
+      basket.add(red_widget_code)
       # Subtotal: 2 * 32.95 = 65.90
       # After BOGO discount: 65.90 - (32.95 * 0.5) = 49.42
       expect(basket.total).to eq(49.42)
     end
 
     it "applies BOGO offer for multiple pairs correctly" do
-      basket.add(Widgets::RedWidget::RED_WIDGET[:code])
-      basket.add(Widgets::RedWidget::RED_WIDGET[:code])
-      basket.add(Widgets::RedWidget::RED_WIDGET[:code])
-      basket.add(Widgets::RedWidget::RED_WIDGET[:code])
+      basket.add(red_widget_code)
+      basket.add(red_widget_code)
+      basket.add(red_widget_code)
+      basket.add(red_widget_code)
 
       # Subtotal: 4 * 32.95 = 131.80
       # BOGO discount for 2 pairs: 2 * (32.95 * 0.5) = 32.95
@@ -78,13 +82,49 @@ RSpec.describe "Acme Widget Co Basket Test" do
     end
 
     it "handles odd numbers correctly applying BOGO only to pairs" do
-      basket.add(Widgets::RedWidget::RED_WIDGET[:code])
-      basket.add(Widgets::RedWidget::RED_WIDGET[:code])
-      basket.add(Widgets::RedWidget::RED_WIDGET[:code])
+      basket.add(red_widget_code)
+      basket.add(red_widget_code)
+      basket.add(red_widget_code)
       # Subtotal: 3 * 32.95 = 98.85
       # BOGO discount for 1 pair: 32.95 * 0.5 = 16.475
       # Total: 98.85 - 16.48 = 82.37
       expect(basket.total).to eq(82.37)
+    end
+  end
+
+  # THIS IS THE ACTUAL TEST SUGGESTED IN THE ASSIGNMENT INSTRUCTIONS
+  describe "Example Baskets from Requirements" do
+    let(:basket) { Basket.new(product_catalogue, [bogo_red_offer], DeliveryRule.new) }
+
+    it "calculates B01, G01 = $37.85" do
+      basket.add(blue_widget_code)  # $7.95
+      basket.add(green_widget_code)  # $24.95
+
+      expect(basket.total).to eq(37.85)
+    end
+
+    it "calculates R01, R01 = $54.37" do
+      basket.add(red_widget_code)  # $32.95
+      basket.add(red_widget_code)  # $32.95
+
+      expect(basket.total).to eq(54.37)
+    end
+
+    it "calculates R01, G01 = $60.85" do
+      basket.add(red_widget_code)  # $32.95
+      basket.add(green_widget_code)  # $24.95
+
+      expect(basket.total).to eq(60.85)
+    end
+
+    it "calculates B01, B01, R01, R01, R01 = $98.27" do
+      basket.add(blue_widget_code)  # $7.95
+      basket.add(blue_widget_code)  # $7.95
+      basket.add(red_widget_code)  # $32.95
+      basket.add(red_widget_code)  # $32.95
+      basket.add(red_widget_code)  # $32.95
+
+      expect(basket.total).to eq(98.27)
     end
   end
 end
