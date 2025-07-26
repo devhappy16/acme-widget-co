@@ -29,7 +29,7 @@ class Basket
 
   # method that takes product code as a parameter
   def add(widget_code)
-    # Find widget from the product catalogue
+    # find widget from the product catalogue
     widget = @product_catalogue.find_by_code(widget_code)
 
     if widget
