@@ -1,25 +1,24 @@
 require_relative "widget"
-require_relative "offer"
+require_relative "offers/red_widget_bogo_offer"
 require_relative "delivery_rule"
 
 class Basket
-  attr_reader :items
+  attr_reader :items, :product_catalogue, :offers
 
-  def initialize(product_catalogue = nil, delivery_rules = nil, offers = nil)
+  def initialize(product_catalogue = nil, offers = nil)
     @items = []
     @product_catalogue = product_catalogue || Widget
-    @delivery_rules = delivery_rules || DeliveryRule.new
-    @offers = offers || Offer.new
+    @offers = offers || [RedWidgetBogoOffer.new]  # array of offers
   end
 
   # returns basket information in hash format
   def to_h
     {
-      items: @items.map(&:to_h),
-      items_count: @items.size,
+      items: items.map(&:to_h),
+      items_count: items.size,
       subtotal:,
-      offers_discount: calculate_offers_discount,
-      delivery_cost: calculate_delivery_cost,
+      offers_discount:,
+      # delivery_cost: delivery_cost,
       total:,
     }
   end
@@ -30,33 +29,35 @@ class Basket
     raise ArgumentError, "Invalid item code: #{widget_code}" if widget.nil?
     raise ArgumentError, "Invalid item type: #{widget.class}" unless widget.is_a?(Widget)
 
-    @items << widget
+    items << widget
 
     self
   end
 
   def subtotal
-    @items.sum(&:price)
+    items.sum(&:price).round(2)
   end
 
   def total
-    subtotal - calculate_offers_discount + calculate_delivery_cost
+    (subtotal - offers_discount + delivery_cost).round(2)
   end
 
   def clear
-    @items.clear
+    items.clear
 
     self
   end
 
   private
 
-  def calculate_offers_discount
-    @offers.apply(@items)
+  def offers_discount
+    # Apply all offers and sum their discounts
+    @offers.sum { |offer| offer.apply(items) }
   end
 
-  def calculate_delivery_cost
-    subtotal_after_offers = subtotal - calculate_offers_discount
-    @delivery_rules.calculate_cost(subtotal_after_offers)
-  end
+  # def delivery_cost
+  #   subtotal_after_offers = subtotal - offers_discount
+  #   delivery_rule = DeliveryRule.new
+  #   delivery_rule.calculate_delivery_charge(subtotal_after_offers)
+  # end
 end
