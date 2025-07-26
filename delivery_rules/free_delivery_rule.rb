@@ -1,4 +1,4 @@
-require_relative '../delivery_rule'
+require_relative "../delivery_rule"
 
 module DeliveryRules
   class FreeDeliveryRule < DeliveryRule

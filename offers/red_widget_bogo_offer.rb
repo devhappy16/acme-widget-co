@@ -1,5 +1,5 @@
-require_relative '../offer'
-require_relative '../widgets/red_widget'
+require_relative "../offer"
+require_relative "../widgets/red_widget"
 
 module Offers
   class RedWidgetBogoOffer < Offer
