@@ -157,7 +157,7 @@ RSpec.describe "Acme Widget Co Basket Test" do
       # subtotal: $49.90 + $65.90 = $115.80
       # BOGO discount: $32.95 * 0.5 = $16.48
       # after BOGO: $115.80 - $16.48 = $99.32
-      # free delivery (over $90)
+      # delivery: $0.0 (over $90 after discount)
       expect(basket.total).to eq(99.32)
     end
 
@@ -221,7 +221,7 @@ RSpec.describe "Acme Widget Co Basket Test" do
       # BOGO discount on red pair: $32.95 * 0.5 = $16.48
       # total discounts: $66.38
       # after discounts: $57.37
-      # free delivery (original total was over $90)
+      # delivery: $2.95 (after discounts, between $50 and $90)
       expect(basket.total).to eq(60.32)
     end
 

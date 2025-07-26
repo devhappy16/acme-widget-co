@@ -45,7 +45,9 @@ class Basket
 
   # final total after offers discount and adding delivery cost
   def total
-    (subtotal - offers_discount_amount + delivery_cost).round(2)
+    total_after_offers = subtotal - offers_discount_amount
+
+    (total_after_offers + delivery_cost(total_after_offers)).round(2)
   end
 
   def total_with_currency
@@ -60,8 +62,7 @@ class Basket
 
   private
 
-  def delivery_cost
-    subtotal_after_offers = subtotal - offers_discount_amount
+  def delivery_cost(subtotal_after_offers)
     delivery_rule.calculate_delivery_charge(subtotal_after_offers).round(2)
   end
 
