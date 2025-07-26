@@ -1,7 +1,7 @@
-require_relative 'offer'
+require_relative '../offer'
 require_relative '../widget'
 
-class RedWidgetBogoHalf < Offer
+class RedWidgetBogoOffer < Offer
   def apply(items)
     red_widget_count = items.count { |item| item.code == Widget::RED_WIDGET[:code] }
     return 0 if red_widget_count < 2
