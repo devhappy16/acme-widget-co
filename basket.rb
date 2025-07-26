@@ -4,6 +4,7 @@ require_relative "offer"
 require_relative "delivery_rule"
 
 class Basket
+  CURRENCY_CODE = "$"
   attr_reader :items, :product_catalogue, :offers, :delivery_rule
 
   def initialize(product_catalogue = nil, offers = [], delivery_rule = nil)
@@ -47,6 +48,10 @@ class Basket
     (subtotal - offers_discount_amount + delivery_cost).round(2)
   end
 
+  def total_with_currency
+    "#{CURRENCY_CODE}#{'%.2f' % total}"
+  end
+
   def clear
     items.clear
 
@@ -64,7 +69,12 @@ class Basket
     total_offers_discount_amount = 0
     return total_offers_discount_amount if offers.size.zero?
 
-    offers.each do |offer|
+    # IMPORTANT: apply offers in the order of ACTIVE_OFFER_CODES precedence
+    ordered_offers = Offer::ACTIVE_OFFER_CODES
+      .map { |code| offers.find { |offer| offer.offer_code == code } }
+      .compact
+
+    ordered_offers.each do |offer|
       total_offers_discount_amount += offer.apply(items).round(2)
     end
 

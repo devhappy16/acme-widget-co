@@ -2,6 +2,8 @@
 
 class Offer
   ACTIVE_OFFER_CODES = %w[BOGO_RED_WIDGET].freeze
+  # if multiple offers, the offer discount is calculated based on the order/sequence of
+  # offer codes defined in this constant; check basket.rb#offers_discount_amount
 
   def initialize
     validate_offer_code!

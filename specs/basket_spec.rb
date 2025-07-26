@@ -2,12 +2,14 @@ require "rspec"
 require_relative "../basket"
 require_relative "../product_catalogue"
 require_relative "../offers/red_widget_bogo_offer"
+require_relative "../offers/green_widget_all_free_offer"
 require_relative "../delivery_rules/free_delivery_rule"
 
 RSpec.describe "Acme Widget Co Basket Test" do
   let(:product_catalogue) { ProductCatalogue.new }
   let(:free_delivery) { DeliveryRules::FreeDeliveryRule.new }
   let(:bogo_red_offer) { Offers::RedWidgetBogoOffer.new }
+  let(:free_green_offer) { Offers::GreenWidgetAllFreeOffer.new }
 
   let(:red_widget_code) { Widgets::RedWidget::RED_WIDGET[:code] }
   let(:green_widget_code) { Widgets::GreenWidget::GREEN_WIDGET[:code] }
@@ -128,6 +130,7 @@ RSpec.describe "Acme Widget Co Basket Test" do
     end
   end
 
+  # specs to test edge cases and boundary conditions
   describe "Edge Cases" do
     let(:basket) { Basket.new(product_catalogue, [bogo_red_offer], DeliveryRule.new) }
 
@@ -189,6 +192,75 @@ RSpec.describe "Acme Widget Co Basket Test" do
     it "handles invalid product codes gracefully" do
       expect { basket.add("INVALID") }.to raise_error(ArgumentError, /not found in product catalogue/)
       expect(basket.total).to eq(0.0)  # basket should still be empty and valid
+    end
+  end
+
+  # tests to prove that a basket with multiple offers apply discount correctly
+  describe "Multiple Offers" do
+    before(:all) do
+      @original_offer_codes = Offer.const_get(:ACTIVE_OFFER_CODES).dup
+      Offer.const_set(:ACTIVE_OFFER_CODES, @original_offer_codes + ["FREE_GREEN_WIDGET"])
+    end
+
+    after(:all) do
+      Offer.const_set(:ACTIVE_OFFER_CODES, @original_offer_codes)
+    end
+
+    let(:basket) { Basket.new(product_catalogue, [bogo_red_offer, free_green_offer], DeliveryRule.new) }
+
+    it "applies both BOGO and free green widget offers correctly" do
+      # add items in mixed order to test both offers
+      basket.add(red_widget_code)     # $32.95
+      basket.add(green_widget_code)   # $24.95 (free)
+      basket.add(blue_widget_code)    # $7.95
+      basket.add(red_widget_code)     # $32.95 (half price due to BOGO)
+      basket.add(green_widget_code)   # $24.95 (free)
+
+      # subtotal: $123.75
+      # green widget discount: 2 * $24.95 = $49.90
+      # BOGO discount on red pair: $32.95 * 0.5 = $16.48
+      # total discounts: $66.38
+      # after discounts: $57.37
+      # free delivery (original total was over $90)
+      expect(basket.total).to eq(60.32)
+    end
+
+    it "handles multiple offers with single items" do
+      basket.add(red_widget_code)     # $32.95 (no BOGO, needs pair)
+      basket.add(green_widget_code)   # $24.95 (free)
+      basket.add(blue_widget_code)    # $7.95
+
+      # subtotal: $65.85
+      # green widget discount: $24.95
+      # no BOGO discount (single red)
+      # after discounts: $40.90
+      # delivery: $4.95 (under $50)
+      expect(basket.total).to eq(45.85)
+    end
+
+    it "calculates correct total when all items are discounted" do
+      basket.add(red_widget_code)     # $32.95
+      basket.add(red_widget_code)     # $32.95 (half price)
+      basket.add(green_widget_code)   # $24.95 (free)
+      basket.add(green_widget_code)   # $24.95 (free)
+
+      # subtotal: $115.80
+      # green widget discount: 2 * $24.95 = $49.90
+      # BOGO discount: $32.95 * 0.5 = $16.48
+      # total discounts: $66.38
+      # after discounts: $49.42
+      # delivery: $4.95 (under $50)
+      expect(basket.total).to eq(54.37)
+    end
+  end
+
+  describe "total_with_currency" do
+    let(:basket) { Basket.new(product_catalogue, [bogo_red_offer], DeliveryRule.new) }
+
+    it "returns total with currency symbol" do
+      basket.add(red_widget_code)  # $32.95
+      expect(Basket::CURRENCY_CODE).to eq("$")
+      expect(basket.total_with_currency).to eq("$37.90") # widget cose + delivery
     end
   end
 end
