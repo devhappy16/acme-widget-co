@@ -197,13 +197,8 @@ RSpec.describe "Acme Widget Co Basket Test" do
 
   # tests to prove that a basket with multiple offers apply discount correctly
   describe "Multiple Offers" do
-    before(:all) do
-      @original_offer_codes = Offer.const_get(:ACTIVE_OFFER_CODES).dup
-      Offer.const_set(:ACTIVE_OFFER_CODES, @original_offer_codes + ["FREE_GREEN_WIDGET"])
-    end
-
-    after(:all) do
-      Offer.const_set(:ACTIVE_OFFER_CODES, @original_offer_codes)
+    before do
+      stub_const("Offer::ACTIVE_OFFER_CODES", Offer::ACTIVE_OFFER_CODES + ["FREE_GREEN_WIDGET"])
     end
 
     let(:basket) { Basket.new(product_catalogue, [bogo_red_offer, free_green_offer], DeliveryRule.new) }
