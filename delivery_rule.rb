@@ -1,4 +1,4 @@
-# base class for all delivery rules
+# base/default class for delivery rule
 
 class DeliveryRule
   def calculate_delivery_charge(subtotal_after_offers)
@@ -14,9 +14,5 @@ class DeliveryRule
     else
       0.0 # free delivery for orders over $100
     end
-  end
-
-  def description
-    raise NotImplementedError, "Subclasses must implement the description method"
   end
 end

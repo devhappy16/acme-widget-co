@@ -20,7 +20,7 @@ class Basket
       items: items.map(&:to_h),
       items_count: items.size,
       subtotal:,
-      offers_discount:,
+      offers_discount_amount:,
       delivery_cost:,
       total:,
     }
@@ -42,6 +42,7 @@ class Basket
     items.sum(&:price).round(2)
   end
 
+  # final total after offers discount and adding delivery cost
   def total
     (subtotal - offers_discount + delivery_cost).round(2)
   end
@@ -54,19 +55,19 @@ class Basket
 
   private
 
-  def offers_discount
-    total_offers_discount = 0
-    return total_offers_discount if offers.size.zero?
-
-    offers.each do |offer|
-      total_offers_discount += offer.apply(items).round(2)
-    end
-
-    total_offers_discount
-  end
-
   def delivery_cost
     subtotal_after_offers = subtotal - offers_discount
     delivery_rule.calculate_delivery_charge(subtotal_after_offers).round(2)
+  end
+
+  def offers_discount_amount
+    total_offers_discount_amount = 0
+    return total_offers_discount_amount if offers.size.zero?
+
+    offers.each do |offer|
+      total_offers_discount_amount += offer.apply(items).round(2)
+    end
+
+    total_offers_discount_amount
   end
 end
