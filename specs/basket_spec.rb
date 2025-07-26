@@ -127,4 +127,68 @@ RSpec.describe "Acme Widget Co Basket Test" do
       expect(basket.total).to eq(98.27)
     end
   end
+
+  describe "Edge Cases" do
+    let(:basket) { Basket.new(product_catalogue, [bogo_red_offer], DeliveryRule.new) }
+
+    it "handles empty basket" do
+      expect(basket.total).to eq(0.0) # no delivery charge
+    end
+
+    it "handles single inexpensive item" do
+      basket.add(blue_widget_code)  # $7.95
+      expect(basket.total).to eq(12.90)  # $7.95 + $4.95 delivery
+    end
+
+    it "handles prices at delivery charge boundaries" do
+      # test at $50 boundary
+      basket.add(green_widget_code)  # $24.95
+      basket.add(green_widget_code)  # $24.95
+      # subtotal: $49.90 ($24.95 + $24.95)
+      # delivery charge: $4.95 (under $50)
+      expect(basket.total).to eq(54.85)  # $49.90 + $4.95 delivery (under $50)
+
+      # Test over $90 boundary with BOGO
+      basket.add(red_widget_code)    # $32.95
+      basket.add(red_widget_code)    # $32.95 (gets 50% off)
+      # subtotal: $49.90 + $65.90 = $115.80
+      # BOGO discount: $32.95 * 0.5 = $16.48
+      # after BOGO: $115.80 - $16.48 = $99.32
+      # free delivery (over $90)
+      expect(basket.total).to eq(99.32)
+    end
+
+    it "handles mixed widgets with multiple BOGO pairs" do
+      basket.add(red_widget_code)    # $32.95
+      basket.add(blue_widget_code)   # $7.95
+      basket.add(red_widget_code)    # $32.95
+      basket.add(green_widget_code)  # $24.95
+      basket.add(red_widget_code)    # $32.95
+      basket.add(red_widget_code)    # $32.95
+
+      # basket has 2 pairs of red widgets
+      # subtotal: $164.70
+      # BOGO discount: 2 * ($32.95 * 0.5) = $32.95
+      # after discount: $131.75
+      # free delivery (over $90)
+      expect(basket.total).to eq(131.75)
+    end
+
+    it "handles repeated add/clear operations" do
+      basket.add(red_widget_code)
+      basket.add(red_widget_code)
+      expect(basket.total).to eq(54.37)  # $65.90 - $16.48 BOGO + $4.95 delivery
+
+      basket.clear
+      expect(basket.total).to eq(0.0)
+
+      basket.add(blue_widget_code)
+      expect(basket.total).to eq(12.90)  # $7.95 + $4.95 delivery
+    end
+
+    it "handles invalid product codes gracefully" do
+      expect { basket.add("INVALID") }.to raise_error(ArgumentError, /not found in product catalogue/)
+      expect(basket.total).to eq(0.0)  # basket should still be empty and valid
+    end
+  end
 end

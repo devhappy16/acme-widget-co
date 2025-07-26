@@ -1,4 +1,4 @@
-require_relative '../widget'
+require_relative "../widget"
 
 module Widgets
   class GreenWidget < Widget
