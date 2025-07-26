@@ -5,10 +5,10 @@ require_relative "delivery_rule"
 class Basket
   attr_reader :items, :product_catalogue, :offers
 
-  def initialize(product_catalogue = nil, offers = nil)
+  def initialize(product_catalogue = [], offers = [])
     @items = []
-    @product_catalogue = product_catalogue || Widget
-    @offers = offers || [RedWidgetBogoOffer.new]  # array of offers
+    @product_catalogue = product_catalogue # TODO: array of widgets?
+    @offers = offers # array of offers
   end
 
   # returns basket information in hash format
@@ -51,8 +51,14 @@ class Basket
   private
 
   def offers_discount
-    # Apply all offers and sum their discounts
-    @offers.sum { |offer| offer.apply(items) }
+    total_offer_discount = 0
+    return total_offer_discount if offers.size.zero?
+
+    offers.each do |offer|
+      total_offer_discount += offer.apply(items).round(2)
+    end
+
+    total_offer_discount
   end
 
   # def delivery_cost
