@@ -1,6 +1,6 @@
 require_relative "widget"
 
-class Basket
+class Cart
   attr_reader :items
 
   def initialize
